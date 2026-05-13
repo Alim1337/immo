@@ -1,0 +1,196 @@
+/* ─── E-Krili Warm Light Theme ─── */
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Raleway:wght@300;400;500;600&display=swap');
+
+:root {
+  --gold: #B8892A;
+  --gold-light: #D4A84B;
+  --gold-dim: #C9A86C;
+  --bg: #EDE9E1;
+  --bg2: #E4DFD5;
+  --bg3: #D8D2C6;
+  --text: #1A1713;
+  --text-muted: #5A5248;
+  --text-faint: #8A8278;
+  --border-gold: rgba(184,137,42,0.2);
+  --shadow: 0 2px 20px rgba(0,0,0,0.08);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  background-color: #EDE9E1;
+  color: #1A1713;
+  font-family: 'Raleway', sans-serif;
+  font-weight: 300;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: #D8D2C6; }
+::-webkit-scrollbar-thumb { background: #C9A86C; }
+::-webkit-scrollbar-thumb:hover { background: #B8892A; }
+::selection { background: rgba(184,137,42,0.18); color: #1A1713; }
+a { color: inherit; text-decoration: none; }
+
+/* ── Small Cards ── */
+.small-card {
+  position: relative; overflow: hidden; cursor: pointer;
+  background: #D8D2C6;
+  transition: box-shadow 0.3s, transform 0.3s;
+}
+.small-card:hover { box-shadow: 0 12px 40px rgba(0,0,0,0.15); transform: translateY(-2px); }
+.small-card img { transition: transform 0.5s ease; }
+.small-card:hover img { transform: scale(1.05); }
+.small-card-border { position: absolute; inset: 0; border: 1px solid transparent; transition: border-color 0.3s; pointer-events: none; }
+.small-card:hover .small-card-border { border-color: rgba(184,137,42,0.5); }
+
+/* ── Medium Cards ── */
+.medium-card {
+  position: relative; flex: 0 0 220px; height: 290px;
+  overflow: hidden; cursor: pointer;
+}
+.medium-card img { transition: transform 0.5s ease; }
+.medium-card:hover img { transform: scale(1.05); }
+.medium-card-border { position: absolute; inset: 0; border: 1px solid transparent; transition: border-color 0.3s; pointer-events: none; }
+.medium-card:hover .medium-card-border { border-color: rgba(184,137,42,0.5); }
+
+/* ── Misc ── */
+.large-cta:hover { background: #9A7020 !important; }
+.scroll-track::-webkit-scrollbar { height: 1px; }
+.scroll-track::-webkit-scrollbar-track { background: #D8D2C6; }
+.scroll-track::-webkit-scrollbar-thumb { background: #C9A86C; }
+
+/* ── Header ── */
+.lux-header {
+  background: #EDE9E1;
+  border-bottom: 1px solid rgba(184,137,42,0.22);
+  box-shadow: 0 1px 16px rgba(0,0,0,0.06);
+}
+.lux-select { background: transparent !important; color: #5A5248 !important; }
+.lux-select option { background: #EDE9E1; color: #1A1713; }
+.lux-search-btn:hover { background: #9A7020 !important; }
+.lux-outline-btn { border: 1px solid rgba(184,137,42,0.35) !important; color: #5A5248 !important; }
+.lux-outline-btn:hover { background: rgba(184,137,42,0.08) !important; color: #B8892A !important; border-color: #B8892A !important; }
+.lux-gold-btn { background: #B8892A !important; color: #EDE9E1 !important; }
+.lux-gold-btn:hover { background: #9A7020 !important; }
+.lux-menu-item:hover { background: rgba(184,137,42,0.08) !important; color: #B8892A !important; }
+.lux-menu-items {
+  background: #EDE9E1 !important;
+  border: 1px solid rgba(184,137,42,0.2) !important;
+  border-radius: 0 !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.1) !important;
+}
+
+/* ── Banner ── */
+.banner-cta {
+  display: inline-block;
+  border: 1px solid #B8892A;
+  color: #B8892A;
+  font-family: 'Raleway', sans-serif;
+  font-size: 11px;
+  letter-spacing: 4px;
+  padding: 14px 40px;
+  cursor: pointer;
+  background: transparent;
+  transition: background 0.3s, color 0.3s;
+  margin-top: 32px;
+}
+.banner-cta:hover { background: #B8892A; color: #EDE9E1; }
+
+.banner-stat {
+  border: 1px solid rgba(184,137,42,0.3);
+  padding: 18px 28px;
+  background: rgba(237,233,225,0.9);
+  text-align: center;
+  backdrop-filter: blur(8px);
+}
+.banner-stat-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 32px;
+  font-weight: 300;
+  color: #B8892A;
+  line-height: 1;
+}
+.banner-stat-label {
+  font-family: 'Raleway', sans-serif;
+  font-size: 9px;
+  letter-spacing: 4px;
+  color: #8A8278;
+  margin-top: 4px;
+}
+
+/* ── Login ── */
+.login-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(184,137,42,0.3);
+  color: #1A1713;
+  font-family: 'Raleway', sans-serif;
+  font-size: 14px;
+  font-weight: 300;
+  padding: 10px 0;
+  outline: none;
+  transition: border-color 0.3s;
+  margin-bottom: 32px;
+}
+.login-input:focus { border-bottom-color: #B8892A; }
+.login-input::placeholder { color: rgba(90,82,72,0.5); font-size: 13px; }
+
+.login-submit {
+  width: 100%;
+  background: #B8892A;
+  border: none;
+  color: #EDE9E1;
+  font-family: 'Raleway', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 4px;
+  padding: 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-top: 8px;
+}
+.login-submit:hover { background: #9A7020; }
+.login-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.login-link { color: #8A8278; font-size: 11px; letter-spacing: 1px; cursor: pointer; font-family: 'Raleway', sans-serif; }
+.login-link span { color: #B8892A; }
+
+/* ── Signup ── */
+.signup-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(184,137,42,0.25);
+  color: #1A1713;
+  font-family: 'Raleway', sans-serif;
+  font-size: 14px;
+  font-weight: 300;
+  padding: 10px 0;
+  outline: none;
+  transition: border-color 0.3s;
+  margin-bottom: 32px;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.signup-input:focus { border-bottom-color: #B8892A; }
+.signup-input::placeholder { color: rgba(90,82,72,0.45); font-size: 13px; }
+.signup-input option { background: #EDE9E1; color: #1A1713; }
+
+.signup-btn {
+  background: transparent;
+  border: 1px solid #B8892A;
+  color: #B8892A;
+  font-family: 'Raleway', sans-serif;
+  font-size: 11px;
+  letter-spacing: 4px;
+  padding: 15px 50px;
+  cursor: pointer;
+  transition: background 0.25s, color 0.25s;
+}
+.signup-btn:hover { background: #B8892A; color: #EDE9E1; }
+.signup-btn:disabled { opacity: 0.5; cursor: not-allowed; }
