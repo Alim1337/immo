@@ -112,43 +112,6 @@ export default function Header() {
 
   return (
     <>
-      {/* ── Global header styles ── */}
-      <style>{`
-        .lux-header {
-          background: ${HERO};
-          border-bottom: 1px solid ${BORDER};
-        }
-        .lux-header::before {
-          content: '';
-          position: absolute;
-          top: 0; left: 0; right: 0;
-          height: 2px;
-          background: linear-gradient(to right, ${GOLD}, rgba(184,137,42,0.3) 60%, transparent 100%);
-          pointer-events: none;
-        }
-        .lux-select option { background: ${HERO_2}; color: ${TEXT}; }
-        .lux-select:hover, .lux-select:focus { color: ${TEXT} !important; }
-        .lux-search-btn:hover { background: ${GOLD_L} !important; }
-        .lux-outline-btn {
-          border: 1px solid ${BORDER};
-          color: ${MUTED};
-          transition: border-color 0.2s, color 0.2s;
-        }
-        .lux-outline-btn:hover { border-color: ${GOLD_L}; color: ${GOLD_L}; }
-        .lux-gold-btn {
-          background: ${GOLD};
-          color: ${CREAM};
-          transition: background 0.2s;
-        }
-        .lux-gold-btn:hover { background: ${GOLD_L}; }
-        .lux-menu-items {
-          background: ${HERO_2};
-          border: 1px solid ${BORDER};
-          box-shadow: 0 20px 50px rgba(0,0,0,0.55);
-        }
-        .lux-menu-item:hover { color: ${GOLD_L} !important; background: rgba(184,137,42,0.07) !important; }
-        .lux-menu-item-danger:hover { color: #e07070 !important; }
-      `}</style>
 
       <header
         className="lux-header"

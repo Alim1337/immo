@@ -1,0 +1,16 @@
+{
+  "/_app": "pages/_app.js",
+  "/_error": "pages/_error.js",
+  "/_document": "pages/_document.js",
+  "/panel": "pages/panel.js",
+  "/negotiation": "pages/negotiation.js",
+  "/api/api_create_negotiation": "pages/api/api_create_negotiation.js",
+  "/api/api_fetch_all_biens": "pages/api/api_fetch_all_biens.js",
+  "/negotiation_demande_client": "pages/negotiation_demande_client.js",
+  "/api/api_voir_negotiation_demande_client": "pages/api/api_voir_negotiation_demande_client.js",
+  "/api/api_voir_negotiation_client": "pages/api/api_voir_negotiation_client.js",
+  "/negotiation_client": "pages/negotiation_client.js",
+  "/api/api_check_rdv_existence": "pages/api/api_check_rdv_existence.js",
+  "/profile": "pages/profile.js",
+  "/api/api_getClient": "pages/api/api_getClient.js"
+}
