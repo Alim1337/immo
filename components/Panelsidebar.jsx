@@ -34,7 +34,7 @@ export default function PanelSidebar({ user, canPublish, isClient, onLogout, unr
 
   const navItems = [
     { icon: 'home',     label: 'Tableau de bord', href: '/panel'            },
-    { icon: 'search',   label: 'Parcourir',        href: '/homesList'        },
+    { icon: 'search',   label: 'Parcourir',        href: '/biens'        },
     { icon: 'chat',     label: 'Négociations',     href: '/negociations',    badge: unreadCount },
     ...(canPublish ? [
       { icon: 'building', label: 'Mes biens',       href: '/biens/mes-biens' },

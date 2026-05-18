@@ -1,7 +1,13 @@
+// components/BienForm.js
+// Reusable form used by pages/biens/nouveau.js AND pages/biens/[id]/modifier.js
+// Props:
+//   initialData  — object with existing values (for edit mode), null for create
+//   onSubmit(formData, images) — called with form values + base64 images array
+//   loading      — bool, disables submit button
+//   error        — string, shown as error banner
+//   submitLabel  — string, button label (default "PUBLIER")
+
 import React, { useState } from 'react'
-import { useRouter } from 'next/router'
-import { toast, ToastContainer } from 'react-toastify'
-import 'react-toastify/dist/ReactToastify.css'
 
 const GOLD   = '#B8892A'
 const GOLD_L = '#D4A84B'
@@ -11,122 +17,30 @@ const FAINT  = '#8A8278'
 const BG     = '#EDE9E1'
 const BG2    = '#E4DFD5'
 const BORDER = 'rgba(184,137,42,0.22)'
+const RED    = '#C0392B'
 
-const adresseOptions = [
-  'Aïn Benian','Aïn Taya','Alger-Centre','Baba Hassen','Bab El Oued','Bab Ezzouar',
-  'Bachdjerrah','Baraki','Belouizdad','Ben Aknoun','Beni Messous',
-  'Birkhadem','Bir Mourad Raïs','Birtouta','Bologhine',
-  'Bordj El Bahri','Bordj El Kiffan','Bourouba','Bouzareah','Casbah',
-  'Chéraga','Dar El Beïda','Dely Ibrahim',
-  'Djasr Kasentina','Douera','Draria',
-  'El Achour','El Biar','El Hammamet','El Harrach','El Madania',
-  'El Marsa','El Mouradia','El Magharia','Hraoua','Hussein-Dey','Hydra',
-  'Khraïssia','Kouba','Les Eucalyptus','Mahelma','Mohammadia','Oued Koriche',
-  'Oued Smar','Ouled Chebel','Ouled Fayet',
-  'Rahmania','Raïs Hamidou','Réghaïa','Rouïba','Saoula',
-  'Sidi MHamed','Sidi Moussa','Souidania','Staoueli','Tessala El Merdja','Zéralda',
+const TYPES        = ['APPARTEMENT','VILLA','MAISON','BUREAU','LOCAL_COMMERCIAL','TERRAIN','STUDIO']
+const TRANSACTIONS = ['LOCATION','VENTE','LOCATION_VACANCES']
+const ETATS        = ['DISPONIBLE','RESERVE','LOUE','VENDU','SUSPENDU']
+const WILAYAS      = [
+  'Adrar','Chlef','Laghouat','Oum El Bouaghi','Batna','Béjaïa','Biskra','Béchar',
+  'Blida','Bouira','Tamanrasset','Tébessa','Tlemcen','Tiaret','Tizi Ouzou','Alger',
+  'Djelfa','Jijel','Sétif','Saïda','Skikda','Sidi Bel Abbès','Annaba','Guelma',
+  'Constantine','Médéa','Mostaganem',"M'Sila",'Mascara','Ouargla','Oran','El Bayadh',
+  'Illizi','Bordj Bou Arréridj','Boumerdès','El Tarf','Tindouf','Tissemsilt','El Oued',
+  'Khenchela','Souk Ahras','Tipaza','Mila','Aïn Defla','Naâma','Aïn Témouchent',
+  'Ghardaïa','Relizane',
+]
+const EQUIPEMENTS = [
+  'WiFi','Parking','Piscine','Ascenseur','Sécurité','Climatisation',
+  'Chauffage','Balcon','Terrasse','Jardin','Cave','Garage',
 ]
 
-function FormField({ label, children }) {
-  return (
-    <div style={{ marginBottom: 24 }}>
-      <label style={{
-        display: 'block',
-        fontFamily: "'Raleway', sans-serif",
-        fontSize: 9, letterSpacing: 4,
-        color: GOLD, marginBottom: 10,
-      }}>
-        {label}
-      </label>
-      {children}
-    </div>
-  )
-}
-
-function StyledInput({ value, onChange, placeholder, type = 'text', required }) {
-  const [focused, setFocused] = useState(false)
-  return (
-    <input
-      type={type}
-      value={value}
-      onChange={onChange}
-      placeholder={placeholder}
-      required={required}
-      onFocus={() => setFocused(true)}
-      onBlur={() => setFocused(false)}
-      style={{
-        display: 'block', width: '100%', boxSizing: 'border-box',
-        background: focused ? BG : 'rgba(237,233,225,0.5)',
-        border: `1px solid ${focused ? GOLD : BORDER}`,
-        padding: '11px 14px',
-        fontFamily: "'Raleway', sans-serif", fontSize: 11,
-        color: TEXT, outline: 'none', transition: 'all 0.2s',
-        letterSpacing: 0.3,
-      }}
-    />
-  )
-}
-
-function StyledSelect({ value, onChange, required, children }) {
-  const [focused, setFocused] = useState(false)
-  return (
-    <select
-      value={value}
-      onChange={onChange}
-      required={required}
-      onFocus={() => setFocused(true)}
-      onBlur={() => setFocused(false)}
-      style={{
-        display: 'block', width: '100%', boxSizing: 'border-box',
-        backgroundColor: focused ? BG : 'rgba(237,233,225,0.5)',
-        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238A8278' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
-        backgroundRepeat: 'no-repeat',
-        backgroundPosition: 'right 14px center',
-        border: `1px solid ${focused ? GOLD : BORDER}`,
-        padding: '11px 14px',
-        fontFamily: "'Raleway', sans-serif", fontSize: 11,
-        color: value ? TEXT : FAINT,
-        outline: 'none', transition: 'all 0.2s',
-        appearance: 'none',
-        cursor: 'pointer',
-      }}
-    >
-      {children}
-    </select>
-  )
-}
-
-function ActionBtn({ children, onClick, type = 'button', primary, disabled }) {
-  const [hover, setHover] = useState(false)
-  return (
-    <button
-      type={type}
-      onClick={onClick}
-      disabled={disabled}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      style={{
-        flex: 1,
-        padding: '13px 0',
-        background: primary
-          ? (disabled ? MUTED : hover ? '#9A7020' : GOLD)
-          : (hover ? BG : 'transparent'),
-        border: primary ? 'none' : `1px solid ${hover ? MUTED : BORDER}`,
-        color: primary ? BG : MUTED,
-        fontFamily: "'Raleway', sans-serif",
-        fontSize: 9, letterSpacing: 3,
-        cursor: disabled ? 'not-allowed' : 'pointer',
-        transition: 'all 0.2s',
-      }}
-    >
-      {children}
-    </button>
-  )
-}
+// ── Reusable sub-components ─────────────────────────────────────────────────
 
 function SectionLabel({ children }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 22, marginTop: 8 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24, marginTop: 8 }}>
       <div style={{ fontFamily: "'Raleway', sans-serif", fontSize: 8, letterSpacing: 4, color: GOLD_L, whiteSpace: 'nowrap' }}>
         {children}
       </div>
@@ -135,226 +49,312 @@ function SectionLabel({ children }) {
   )
 }
 
-export default function BienForm() {
-  const [description,     setDescription]    = useState('')
-  const [typeBien,        setTypeBien]        = useState('')
-  const [ville,           setVille]           = useState('Alger')
-  const [nbrChambre,      setNbrChambre]      = useState('')
-  const [selectedAddress, setSelectedAddress] = useState('')
-  const [codePostal,      setCodePostal]      = useState('')
-  const [minPrixEstime,   setMinPrixEstime]   = useState('')
-  const [etat,            setEtat]            = useState('')
-  const [image,           setImage]           = useState(null)
-  const [loading,         setLoading]         = useState(false)
+function Field({ label, required, children }) {
+  return (
+    <div style={{ marginBottom: 24 }}>
+      <label style={{ display: 'block', fontFamily: "'Raleway', sans-serif", fontSize: 9, letterSpacing: 3, color: FAINT, marginBottom: 8 }}>
+        {label.toUpperCase()}{required && <span style={{ color: GOLD }}> *</span>}
+      </label>
+      {children}
+    </div>
+  )
+}
 
-  const router = useRouter()
+function Input({ value, onChange, type = 'text', placeholder, required, min }) {
+  const [focused, setFocused] = useState(false)
+  return (
+    <input
+      type={type} value={value} onChange={onChange}
+      placeholder={placeholder} required={required} min={min}
+      onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+      style={{
+        display: 'block', width: '100%', boxSizing: 'border-box',
+        background: focused ? BG : 'rgba(237,233,225,0.5)',
+        border: `1px solid ${focused ? GOLD : BORDER}`,
+        padding: '11px 14px',
+        fontFamily: "'Raleway', sans-serif", fontSize: 12, color: TEXT,
+        outline: 'none', transition: 'all 0.2s',
+      }}
+    />
+  )
+}
 
-  async function handleSubmit(e) {
+function Select({ value, onChange, required, children }) {
+  const [focused, setFocused] = useState(false)
+  return (
+    <select
+      value={value} onChange={onChange} required={required}
+      onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+      style={{
+        display: 'block', width: '100%', boxSizing: 'border-box',
+        background: focused ? BG : 'rgba(237,233,225,0.5)',
+        border: `1px solid ${focused ? GOLD : BORDER}`,
+        padding: '11px 14px',
+        fontFamily: "'Raleway', sans-serif", fontSize: 12, color: TEXT,
+        outline: 'none', transition: 'all 0.2s',
+        appearance: 'none', cursor: 'pointer',
+      }}
+    >
+      {children}
+    </select>
+  )
+}
+
+// ── Main component ───────────────────────────────────────────────────────────
+
+export default function BienForm({
+  initialData  = null,
+  onSubmit,
+  loading      = false,
+  error        = '',
+  submitLabel  = 'PUBLIER LE BIEN',
+  onCancel,
+}) {
+  const isEdit = !!initialData
+
+  const [form, setForm] = useState({
+    titre:            initialData?.titre            || '',
+    description:      initialData?.description      || '',
+    type_bien:        initialData?.type_bien        || '',
+    type_transaction: initialData?.type_transaction || '',
+    adresse:          initialData?.adresse          || '',
+    ville:            initialData?.ville            || '',
+    wilaya:           initialData?.wilaya           || '',
+    code_postal:      initialData?.code_postal      || '',
+    superficie:       initialData?.superficie       || '',
+    nbr_chambres:     initialData?.nbr_chambres     || '',
+    nbr_salles_bain:  initialData?.nbr_salles_bain  || '',
+    nbr_etages:       initialData?.nbr_etages       || '',
+    prix:             initialData?.prix             || '',
+    etat:             initialData?.etat             || 'DISPONIBLE',
+    est_meuble:       initialData?.est_meuble       || false,
+    equipements:      initialData?.equipements      || [],
+  })
+
+  const [images,   setImages]   = useState(initialData?.images || [])
+  const [formErr,  setFormErr]  = useState('')
+
+  const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }))
+
+  const toggleEq = eq => setForm(f => ({
+    ...f,
+    equipements: f.equipements.includes(eq)
+      ? f.equipements.filter(e => e !== eq)
+      : [...f.equipements, eq],
+  }))
+
+  const handleImageChange = e => {
+    Array.from(e.target.files).forEach(file => {
+      const reader = new FileReader()
+      reader.onload = ev => setImages(prev => [...prev, ev.target.result])
+      reader.readAsDataURL(file)
+    })
+  }
+
+  const handleSubmit = e => {
     e.preventDefault()
-    setLoading(true)
-
-    try {
-      const token = localStorage.getItem('token')
-      if (!token) {
-        toast.error('Session expirée, veuillez vous reconnecter.', { position: 'top-center' })
-        router.push('/login_client')
-        return
-      }
-
-      const res = await fetch('/api/addBien', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          description,
-          type_bien: typeBien,
-          nbr_chambre: nbrChambre,
-          adresse: selectedAddress,
-          ville,
-          code_postal: codePostal,
-          prix_estime: minPrixEstime,
-          etat,
-        }),
-      })
-
-      if (res.ok) {
-        toast.success('Bien ajouté avec succès !', { position: 'top-center' })
-        setTimeout(() => router.push('/clientHouses'), 1200)
-      } else {
-        const data = await res.json()
-        toast.error(data.error || 'Une erreur est survenue.', { position: 'top-center' })
-      }
-    } catch (err) {
-      toast.error('Erreur réseau, veuillez réessayer.', { position: 'top-center' })
-    } finally {
-      setLoading(false)
-    }
+    setFormErr('')
+    if (!form.titre)            return setFormErr('Le titre est obligatoire.')
+    if (!form.type_bien)        return setFormErr('Le type de bien est obligatoire.')
+    if (!form.type_transaction) return setFormErr('Le type de transaction est obligatoire.')
+    if (!form.ville)            return setFormErr('La ville est obligatoire.')
+    if (!form.wilaya)           return setFormErr('La wilaya est obligatoire.')
+    if (!form.prix)             return setFormErr('Le prix est obligatoire.')
+    onSubmit?.(form, images)
   }
 
-  function handleCancel(e) {
-    e.preventDefault()
-    if (window.confirm('Voulez-vous vraiment annuler ?')) router.push('/clientHouses')
-  }
-
-  const handleImageChange = (e) => {
-    const file = e.target.files[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = (ev) => {
-      const obj = { name: `image_${Date.now()}`, data: ev.target.result }
-      setImage(obj)
-      localStorage.setItem('selectedImage', JSON.stringify(obj))
-    }
-    reader.readAsDataURL(file)
-  }
+  const displayError = formErr || error
 
   return (
-    <div style={{ background: BG, minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 1 }}>
+    <form onSubmit={handleSubmit}>
 
-      <main style={{ flex: 1, display: 'flex', justifyContent: 'center', padding: '56px 24px 72px' }}>
-        <div style={{ width: '100%', maxWidth: 640 }}>
-
-          {/* Page header */}
-          <div style={{ marginBottom: 44 }}>
-            <div style={{ fontFamily: "'Raleway', sans-serif", fontSize: 9, letterSpacing: 5, color: GOLD, marginBottom: 10 }}>
-              ESPACE CLIENT
-            </div>
-            <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 40, fontWeight: 300, color: TEXT, margin: 0, lineHeight: 1 }}>
-              Ajouter un bien
-            </h1>
-            <div style={{ width: 36, height: 1, background: GOLD, marginTop: 14 }} />
-            <p style={{ fontFamily: "'Raleway', sans-serif", fontSize: 11, color: FAINT, marginTop: 14, fontWeight: 300, letterSpacing: 0.3 }}>
-              Renseignez les informations de votre propriété pour publier votre annonce.
-            </p>
-          </div>
-
-          {/* Form card */}
-          <div style={{ background: BG2, border: `1px solid ${BORDER}`, padding: '40px 44px' }}>
-            <form onSubmit={handleSubmit}>
-
-              <SectionLabel>INFORMATIONS GÉNÉRALES</SectionLabel>
-
-              <FormField label="TITRE DE L'ANNONCE">
-                <StyledInput
-                  value={description}
-                  onChange={e => setDescription(e.target.value)}
-                  placeholder="Ex. : Villa moderne avec piscine à Hydra"
-                  required
-                />
-              </FormField>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-                <FormField label="TYPE DE BIEN">
-                  <StyledSelect value={typeBien} onChange={e => setTypeBien(e.target.value)} required>
-                    <option value="">Sélectionner</option>
-                    <option value="appartement">Appartement</option>
-                    <option value="villa">Villa</option>
-                    <option value="autre">Autre</option>
-                  </StyledSelect>
-                </FormField>
-
-                <FormField label="NOMBRE DE CHAMBRES">
-                  <StyledSelect value={nbrChambre} onChange={e => setNbrChambre(e.target.value)}>
-                    <option value="">Sélectionner</option>
-                    {['F3','F4','F5','F6','F7','F8','F9','F10'].map(f => (
-                      <option key={f} value={f}>{f}</option>
-                    ))}
-                  </StyledSelect>
-                </FormField>
-              </div>
-
-              <SectionLabel>LOCALISATION</SectionLabel>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-                <FormField label="WILAYA">
-                  <StyledSelect value={ville} onChange={e => setVille(e.target.value)} required>
-                    <option value="Alger">Alger</option>
-                  </StyledSelect>
-                </FormField>
-
-                <FormField label="COMMUNE / ADRESSE">
-                  <StyledSelect value={selectedAddress} onChange={e => setSelectedAddress(e.target.value)} required>
-                    <option value="">Sélectionner</option>
-                    {adresseOptions.map(a => <option key={a} value={a}>{a}</option>)}
-                  </StyledSelect>
-                </FormField>
-              </div>
-
-              <SectionLabel>DÉTAILS DU BIEN</SectionLabel>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-                <FormField label="PRIX MENSUEL ESTIMÉ (DA)">
-                  <StyledInput
-                    value={minPrixEstime}
-                    onChange={e => setMinPrixEstime(e.target.value)}
-                    placeholder="Ex. : 80 000"
-                    required
-                  />
-                </FormField>
-
-                <FormField label="ÉTAT DU BIEN">
-                  <StyledSelect value={etat} onChange={e => setEtat(e.target.value)} required>
-                    <option value="">Sélectionner</option>
-                    <option value="neuf">Neuf</option>
-                    <option value="bonne_condition">Bonne condition</option>
-                    <option value="rénové">Rénové</option>
-                    <option value="à_rénover">À rénover</option>
-                    <option value="partiellement_rénové">Partiellement rénové</option>
-                    <option value="en_construction">En construction</option>
-                  </StyledSelect>
-                </FormField>
-              </div>
-
-              <SectionLabel>PHOTO PRINCIPALE</SectionLabel>
-
-              <FormField label="AJOUTER UNE IMAGE">
-                <label style={{
-                  display: 'flex', alignItems: 'center', gap: 12,
-                  border: `1px dashed ${BORDER}`,
-                  padding: '16px 18px', cursor: 'pointer',
-                  background: 'rgba(237,233,225,0.4)',
-                  fontFamily: "'Raleway', sans-serif", fontSize: 10,
-                  color: image ? GOLD : FAINT, letterSpacing: 1,
-                }}>
-                  <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke={image ? GOLD : FAINT} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
-                  </svg>
-                  {image ? image.name : 'Cliquez pour sélectionner une image'}
-                  <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} />
-                </label>
-              </FormField>
-
-              <div style={{ display: 'flex', gap: 12, marginTop: 36 }}>
-                <ActionBtn type="submit" primary disabled={loading}>
-                  {loading ? 'ENVOI...' : 'CONFIRMER'}
-                </ActionBtn>
-                <ActionBtn onClick={handleCancel}>ANNULER</ActionBtn>
-              </div>
-
-            </form>
-          </div>
-
-          {/* Bottom bar */}
-          <div style={{ marginTop: 48, paddingTop: 20, borderTop: `1px solid ${BORDER}`, display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ fontFamily: "'Raleway', sans-serif", fontSize: 9, letterSpacing: 2, color: FAINT }}>
-              © {new Date().getFullYear()} E-KRILI — IMMOBILIER DE PRESTIGE
-            </span>
-            <span
-              onClick={() => router.push('/clientHouses')}
-              style={{ fontFamily: "'Raleway', sans-serif", fontSize: 9, letterSpacing: 2, color: FAINT, cursor: 'pointer' }}
-              onMouseEnter={e => e.currentTarget.style.color = GOLD}
-              onMouseLeave={e => e.currentTarget.style.color = FAINT}
-            >
-              ← RETOUR AU TABLEAU DE BORD
-            </span>
-          </div>
-
+      {displayError && (
+        <div style={{ fontFamily: "'Raleway', sans-serif", fontSize: 11, color: RED, borderLeft: `2px solid ${RED}`, paddingLeft: 12, marginBottom: 28 }}>
+          {displayError}
         </div>
-      </main>
+      )}
 
-      <ToastContainer toastStyle={{ background: BG2, color: TEXT, border: `1px solid ${BORDER}` }} />
-    </div>
+      {/* ── Informations générales ── */}
+      <SectionLabel>INFORMATIONS GÉNÉRALES</SectionLabel>
+
+      <Field label="Titre de l'annonce" required>
+        <Input value={form.titre} onChange={set('titre')} placeholder="Ex. : Villa moderne avec piscine à Hydra" required />
+      </Field>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+        <Field label="Type de bien" required>
+          <Select value={form.type_bien} onChange={set('type_bien')} required>
+            <option value="">Sélectionner…</option>
+            {TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+          </Select>
+        </Field>
+        <Field label="Type de transaction" required>
+          <Select value={form.type_transaction} onChange={set('type_transaction')} required>
+            <option value="">Sélectionner…</option>
+            {TRANSACTIONS.map(t => <option key={t} value={t}>{t.replace('_', ' ')}</option>)}
+          </Select>
+        </Field>
+      </div>
+
+      <Field label="Description">
+        <textarea
+          value={form.description}
+          onChange={set('description')}
+          rows={4}
+          placeholder="Décrivez votre bien en détail…"
+          style={{
+            display: 'block', width: '100%', boxSizing: 'border-box',
+            background: 'rgba(237,233,225,0.5)', border: `1px solid ${BORDER}`,
+            padding: '11px 14px', fontFamily: "'Raleway', sans-serif",
+            fontSize: 12, color: TEXT, outline: 'none', resize: 'vertical', lineHeight: 1.6,
+          }}
+          onFocus={e => e.target.style.borderColor = GOLD}
+          onBlur={e => e.target.style.borderColor = BORDER}
+        />
+      </Field>
+
+      {/* ── Localisation ── */}
+      <SectionLabel>LOCALISATION</SectionLabel>
+
+      <Field label="Adresse">
+        <Input value={form.adresse} onChange={set('adresse')} placeholder="Numéro, rue, quartier" />
+      </Field>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+        <Field label="Ville" required>
+          <Input value={form.ville} onChange={set('ville')} required />
+        </Field>
+        <Field label="Wilaya" required>
+          <Select value={form.wilaya} onChange={set('wilaya')} required>
+            <option value="">Sélectionner…</option>
+            {WILAYAS.map(w => <option key={w} value={w}>{w}</option>)}
+          </Select>
+        </Field>
+      </div>
+
+      <Field label="Code postal">
+        <Input value={form.code_postal} onChange={set('code_postal')} />
+      </Field>
+
+      {/* ── Détails ── */}
+      <SectionLabel>DÉTAILS DU BIEN</SectionLabel>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+        <Field label="Prix (DZD)" required>
+          <Input type="number" value={form.prix} onChange={set('prix')} placeholder="0" required min="0" />
+        </Field>
+        <Field label="Superficie (m²)">
+          <Input type="number" value={form.superficie} onChange={set('superficie')} min="0" />
+        </Field>
+        <Field label="Nombre de chambres">
+          <Input type="number" value={form.nbr_chambres} onChange={set('nbr_chambres')} min="0" />
+        </Field>
+        <Field label="Salles de bain">
+          <Input type="number" value={form.nbr_salles_bain} onChange={set('nbr_salles_bain')} min="0" />
+        </Field>
+        <Field label="Nombre d'étages">
+          <Input type="number" value={form.nbr_etages} onChange={set('nbr_etages')} min="0" />
+        </Field>
+        <Field label="État">
+          <Select value={form.etat} onChange={set('etat')}>
+            {ETATS.map(e => <option key={e} value={e}>{e}</option>)}
+          </Select>
+        </Field>
+      </div>
+
+      {/* Meublé toggle */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 28 }}>
+        <button type="button" onClick={() => setForm(f => ({ ...f, est_meuble: !f.est_meuble }))}
+          style={{ width: 44, height: 24, borderRadius: 12, background: form.est_meuble ? GOLD : BORDER, border: 'none', cursor: 'pointer', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+          <span style={{ position: 'absolute', top: 2, left: form.est_meuble ? 22 : 2, width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
+        </button>
+        <span style={{ fontFamily: "'Raleway', sans-serif", fontSize: 11, color: MUTED }}>Bien meublé</span>
+      </div>
+
+      {/* Équipements */}
+      <Field label="Équipements">
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          {EQUIPEMENTS.map(eq => (
+            <button key={eq} type="button" onClick={() => toggleEq(eq)}
+              style={{
+                background: form.equipements.includes(eq) ? GOLD : 'transparent',
+                border: `1px solid ${form.equipements.includes(eq) ? GOLD : BORDER}`,
+                color: form.equipements.includes(eq) ? BG : MUTED,
+                fontFamily: "'Raleway', sans-serif", fontSize: 10, letterSpacing: 1,
+                padding: '7px 14px', cursor: 'pointer', transition: 'all 0.2s',
+              }}>
+              {eq}
+            </button>
+          ))}
+        </div>
+      </Field>
+
+      {/* ── Photos ── */}
+      <SectionLabel>PHOTOS</SectionLabel>
+
+      <label
+        style={{ display: 'block', border: `1px dashed ${BORDER}`, padding: '32px', textAlign: 'center', cursor: 'pointer', marginBottom: 16, transition: 'border-color 0.2s' }}
+        onMouseEnter={e => e.currentTarget.style.borderColor = GOLD}
+        onMouseLeave={e => e.currentTarget.style.borderColor = BORDER}
+      >
+        <input type="file" accept="image/*" multiple onChange={handleImageChange} style={{ display: 'none' }} />
+        <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, fontWeight: 300, color: TEXT, marginBottom: 6 }}>
+          {images.length > 0 ? `${images.length} photo(s) sélectionnée(s)` : 'Cliquez ou déposez vos photos ici'}
+        </div>
+        <div style={{ fontFamily: "'Raleway', sans-serif", fontSize: 9, letterSpacing: 2, color: FAINT }}>
+          JPG, PNG — plusieurs fichiers acceptés
+        </div>
+      </label>
+
+      {images.length > 0 && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 6, marginBottom: 28 }}>
+          {images.map((src, i) => (
+            <div key={i} style={{ position: 'relative', height: 90, overflow: 'hidden' }}>
+              <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              {i === 0 && (
+                <div style={{ position: 'absolute', top: 4, left: 4, fontFamily: "'Raleway', sans-serif", fontSize: 7, letterSpacing: 2, color: BG, background: GOLD, padding: '2px 6px' }}>
+                  PRINCIPALE
+                </div>
+              )}
+              <button type="button" onClick={() => setImages(prev => prev.filter((_, j) => j !== i))}
+                style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(20,15,10,0.7)', border: 'none', color: '#fff', width: 20, height: 20, cursor: 'pointer', fontSize: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                ✕
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── Actions ── */}
+      <div style={{ display: 'flex', gap: 12, paddingTop: 28, borderTop: `1px solid ${BORDER}`, marginTop: 8 }}>
+        <button type="submit" disabled={loading}
+          style={{
+            flex: 2, background: GOLD, border: 'none', color: BG,
+            fontFamily: "'Raleway', sans-serif", fontSize: 10, letterSpacing: 3,
+            padding: '14px 0', cursor: loading ? 'not-allowed' : 'pointer',
+            opacity: loading ? 0.6 : 1, transition: 'opacity 0.2s',
+          }}
+          onMouseEnter={e => { if (!loading) e.currentTarget.style.opacity = '0.85' }}
+          onMouseLeave={e => e.currentTarget.style.opacity = loading ? '0.6' : '1'}
+        >
+          {loading ? 'ENREGISTREMENT…' : submitLabel}
+        </button>
+
+        {onCancel && (
+          <button type="button" onClick={onCancel}
+            style={{
+              flex: 1, background: 'transparent', border: `1px solid ${BORDER}`,
+              color: MUTED, fontFamily: "'Raleway', sans-serif",
+              fontSize: 10, letterSpacing: 3, padding: '14px 0',
+              cursor: 'pointer', transition: 'all 0.2s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = GOLD; e.currentTarget.style.color = GOLD }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = BORDER; e.currentTarget.style.color = MUTED }}
+          >
+            ANNULER
+          </button>
+        )}
+      </div>
+    </form>
   )
 }

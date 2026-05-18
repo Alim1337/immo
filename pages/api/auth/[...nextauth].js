@@ -3,7 +3,7 @@ import AppleProvider from "next-auth/providers/apple";
 import GoogleProvider from "next-auth/providers/google";
 import EmailProvider from "next-auth/providers/email";
 import nodemailerAdapter from "@/components/nodeMailer";
-import adapter from "./adapter";
+//import adapter from "./adapter";
 
 const emailAdapter = nodemailerAdapter({
   from: process.env.EMAIL_FROM,

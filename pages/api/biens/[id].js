@@ -14,6 +14,11 @@ export default async function handler(req, res) {
   const { id } = req.query
   const bienId = parseInt(id)
 
+  // Guard: reject immediately if id is missing or not a valid number
+  if (!id || isNaN(bienId)) {
+    return res.status(400).json({ error: 'Identifiant de bien invalide.' })
+  }
+
   if (req.method === 'GET') {
     const bien = await prisma.bien.findUnique({
       where: { id: bienId },

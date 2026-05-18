@@ -431,7 +431,7 @@ export default function Panel() {
               <div style={{ marginBottom: 52 }}>
                 <SectionTitle>ACCÈS RAPIDE</SectionTitle>
                 <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(195px, 1fr))', gap: 6 }}>
-                  <ActionBtn icon="search" label="Parcourir les biens" href="/homesList"            router={router} />
+                  <ActionBtn icon="search" label="Parcourir les biens" href="/biens"            router={router} />
                   <ActionBtn icon="chat"   label="Mes négociations"    href="/negociations"          router={router} />
                   {canPublish && <>
                     <ActionBtn icon="home" label="Gérer mes biens"     href="/biens/mes-biens"       router={router} />
@@ -488,7 +488,7 @@ export default function Panel() {
                     </div>
                   </div>
                   <button
-                    onClick={() => router.push('/homesList')}
+                    onClick={() => router.push('/biens')}
                     style={{
                       background: GOLD, border:'none', color:'#FAF7F2',
                       fontFamily:"'Raleway',sans-serif", fontSize: 9, letterSpacing: 3, fontWeight: 500,

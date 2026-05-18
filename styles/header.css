@@ -1,64 +1,35 @@
+/* ── Header classes (moved from inline <style> to fix SSR hydration mismatch) ── */
 .lux-header {
   background: #EDE9E1;
   border-bottom: 1px solid rgba(184,137,42,0.25);
 }
-
 .lux-header::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
+  top: 0; left: 0; right: 0;
   height: 2px;
   background: linear-gradient(to right, #B8892A, rgba(184,137,42,0.3) 60%, transparent 100%);
   pointer-events: none;
 }
-
-.lux-select option {
-  background: #E4DFD5;
-  color: #1A1713;
-}
-
-.lux-select:hover,
-.lux-select:focus {
-  color: #1A1713 !important;
-}
-
-.lux-search-btn:hover {
-  background: #D4A84B !important;
-}
-
+.lux-select option { background: #E4DFD5; color: #1A1713; }
+.lux-select:hover, .lux-select:focus { color: #1A1713 !important; }
+.lux-search-btn:hover { background: #D4A84B !important; }
 .lux-outline-btn {
   border: 1px solid rgba(184,137,42,0.25);
   color: #5A5248;
   transition: border-color 0.2s, color 0.2s;
 }
-
-.lux-outline-btn:hover {
-  border-color: #D4A84B;
-  color: #D4A84B;
-}
-
+.lux-outline-btn:hover { border-color: #D4A84B; color: #D4A84B; }
 .lux-gold-btn {
   background: #B8892A;
   color: #F5F0E8;
+  transition: background 0.2s;
 }
-
-.lux-gold-btn:hover {
-  background: #D4A84B;
-}
-
+.lux-gold-btn:hover { background: #D4A84B; }
 .lux-menu-items {
   background: #E4DFD5;
   border: 1px solid rgba(184,137,42,0.25);
-  box-shadow: 0 20px 50px rgba(0,0,0,0.55);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.12);
 }
-
-.lux-menu-item:hover {
-  color: #D4A84B !important;
-  background: rgba(184,137,42,0.07) !important;
-}
-
-.lux-menu-item-danger:hover {
-  color: #e07070 !important;
-}
+.lux-menu-item:hover { color: #D4A84B !important; background: rgba(184,137,42,0.07) !important; }
+.lux-menu-item-danger:hover { color: #e07070 !important; }

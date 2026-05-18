@@ -2,8 +2,12 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
+  "/biens/mes-biens": "pages/biens/mes-biens.js",
+  "/biens/nouveau": "pages/biens/nouveau.js",
+  "/api/biens": "pages/api/biens.js",
   "/biens/[id]": "pages/biens/[id].js",
-  "/panel": "pages/panel.js",
-  "/api/users/[id]": "pages/api/users/[id].js",
-  "/profil/[id]": "pages/profil/[id].js"
+  "/api/biens/[id]": "pages/api/biens/[id].js",
+  "/api/favoris": "pages/api/favoris.js",
+  "/biens": "pages/biens.js",
+  "/": "pages/index.js"
 }
