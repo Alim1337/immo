@@ -14,8 +14,12 @@ export default async function handler(req, res) {
   } = req.query
 
   const skip = (Math.max(1, parseInt(page)) - 1) * parseInt(limite)
-  const take = Math.min(50, parseInt(limite))
-  const term = q.trim()
+const take = Math.min(50, parseInt(limite))
+const term = q.trim()
+
+const ALLOWED_SORTS = ['date_publication', 'prix', 'superficie', 'date_mise_a_jour']
+const triField  = ALLOWED_SORTS.includes(req.query.tri) ? req.query.tri : 'date_publication'
+const triOrdre  = req.query.ordre === 'asc' ? 'asc' : 'desc'
 
   try {
     const results = {}
@@ -44,7 +48,7 @@ export default async function handler(req, res) {
       const [biens, total] = await Promise.all([
         prisma.bien.findMany({
           where, skip, take,
-          orderBy: { date_publication: 'desc' },
+          orderBy: { [triField]: triOrdre },
           include: {
             proprietaire: { select: { id: true, nom: true, prenom: true, raison_sociale: true, avatar_url: true, est_verifie: true } },
             _count: { select: { favoris: true, visites: true } },

@@ -67,7 +67,7 @@ export default function Index() {
     const params = new URLSearchParams()
     if (searchType)  params.set('type_transaction', searchType)
     if (searchWilaya) params.set('wilaya', searchWilaya)
-    router.push(`/biens?${params.toString()}`)
+    router.push(`/search?${params.toString()}`)
   }
 
   return (

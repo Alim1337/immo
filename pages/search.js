@@ -64,7 +64,9 @@ export default function SearchPage() {
 
   const doSearch = useCallback(async (pg = 1) => {
     setLoading(true)
-    const [tri, ordre] = sort.split('-')
+    const lastDash = sort.lastIndexOf('-')
+    const tri   = sort.slice(0, lastDash)
+    const ordre = sort.slice(lastDash + 1)
     const params = new URLSearchParams({ q: query, page: pg, limite: 12, tri, ordre })
     Object.entries(filters).forEach(([k, v]) => { if (v) params.set(k, v) })
 
@@ -78,16 +80,28 @@ export default function SearchPage() {
     } catch (e) { console.error(e) }
     finally { setLoading(false) }
   }, [query, filters, sort])
+// ✅ FIXED
+// On mount / when URL query params change → sync them into state
+useEffect(() => {
+  if (!router.isReady) return
+  const { q, wilaya, type_bien, type_transaction, prix_min, prix_max, nbr_chambres } = router.query
+  if (q)                setQuery(q)
+  setFilters({
+    wilaya:           wilaya           || '',
+    type_bien:        type_bien        || '',
+    type_transaction: type_transaction || '',
+    prix_min:         prix_min         || '',
+    prix_max:         prix_max         || '',
+    nbr_chambres:     nbr_chambres     || '',
+  })
+  // doSearch will fire from the filters useEffect below
+}, [router.isReady, router.query])
 
-  // Init from URL query
-  useEffect(() => {
-    if (!router.isReady) return
-    const q = router.query.q || ''
-    setQuery(q)
-  }, [router.isReady, router.query.q])
-
-  // Search when query/filters/sort change
-  useEffect(() => { doSearch(1) }, [query, filters, sort]) // eslint-disable-line
+// Re-search whenever filters or sort change (covers both URL-init and sidebar)
+useEffect(() => {
+  if (!router.isReady) return
+  doSearch(1)
+}, [filters, sort])
 
   const handleSearch = (e) => {
     e.preventDefault()

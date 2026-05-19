@@ -308,14 +308,110 @@ function EmptyState({ label }) {
   )
 }
 
+function DemandeRow({ demande, isOwner, onAccept, onRefuse, onViewBien }) {
+  const [hover,   setHover]   = useState(false)
+  const [acting,  setActing]  = useState(false)
+
+  const STATUT_COLORS = {
+    EN_ATTENTE: { color: GOLD,   bg: GOLD_GLOW },
+    ACCEPTEE:   { color: GREEN,  bg: GREEN_BG  },
+    REFUSEE:    { color: RED,    bg: RED_BG    },
+    ANNULEE:    { color: TEXT_3, bg: BORDER_S  },
+  }
+  const sc = STATUT_COLORS[demande.statut] || { color: TEXT_3, bg: BORDER_S }
+
+  const otherName = isOwner
+    ? `${demande.client?.prenom || ''} ${demande.client?.nom || ''}`.trim()
+    : (demande.proprietaire?.raison_sociale || `${demande.proprietaire?.prenom || ''} ${demande.proprietaire?.nom || ''}`.trim())
+
+  const handleAct = async (action) => {
+    setActing(true)
+    await action()
+    setActing(false)
+  }
+
+  return (
+    <div
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        background:  hover ? BG_CARD2 : BG_CARD,
+        border:     `1px solid ${hover ? BORDER_H : BORDER}`,
+        padding:    '14px 20px',
+        display:    'flex', alignItems: 'center', gap: 14,
+        transition: 'all 0.18s',
+        boxShadow:   hover ? '0 4px 16px rgba(26,23,19,0.08)' : 'none',
+      }}
+    >
+      <Initials name={otherName} size={36} />
+
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{
+          fontFamily:"'Cormorant Garamond',serif", fontSize: 15,
+          color: hover ? TEXT_1 : TEXT_2, marginBottom: 3,
+          whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', transition:'color 0.18s',
+        }}>
+          {demande.bien?.titre || '—'}
+        </div>
+        <div style={{ fontFamily:"'Raleway',sans-serif", fontSize: 10, color: TEXT_3 }}>
+          {isOwner ? `Client : ${otherName}` : `Propriétaire : ${otherName}`}
+          {demande.type && <span style={{ marginLeft: 8, color: GOLD_DIM }}>· {demande.type}</span>}
+        </div>
+        {demande.message && (
+          <div style={{ fontFamily:"'Raleway',sans-serif", fontSize: 10, color: TEXT_3, marginTop: 2, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', maxWidth: 400 }}>
+            {demande.message}
+          </div>
+        )}
+      </div>
+
+      <div style={{ display:'flex', alignItems:'center', gap: 8, flexShrink: 0 }}>
+        {/* Status pill */}
+        <span style={{ fontFamily:"'Raleway',sans-serif", fontSize: 8, letterSpacing: 2, color: sc.color, background: sc.bg, border:`1px solid ${sc.color}33`, padding:'3px 9px', whiteSpace:'nowrap' }}>
+          {(demande.statut || '').replace('_', ' ')}
+        </span>
+
+        {/* View bien button */}
+        <button onClick={onViewBien}
+          style={{ background:'transparent', border:`1px solid ${BORDER}`, color: TEXT_2, fontFamily:"'Raleway',sans-serif", fontSize: 8, letterSpacing: 2, padding:'6px 10px', cursor:'pointer', transition:'all 0.15s', whiteSpace:'nowrap' }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = GOLD; e.currentTarget.style.color = GOLD }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = BORDER; e.currentTarget.style.color = TEXT_2 }}
+        >
+          VOIR LE BIEN
+        </button>
+
+        {/* Accept / Refuse — only for owner on pending demandes */}
+        {isOwner && demande.statut === 'EN_ATTENTE' && (
+          <>
+            <button onClick={() => handleAct(onAccept)} disabled={acting}
+              style={{ background: GREEN_BG, border:`1px solid ${GREEN}55`, color: GREEN, fontFamily:"'Raleway',sans-serif", fontSize: 8, letterSpacing: 2, padding:'6px 12px', cursor: acting ? 'not-allowed' : 'pointer', transition:'all 0.15s', opacity: acting ? 0.6 : 1 }}
+              onMouseEnter={e => { if (!acting) e.currentTarget.style.background = 'rgba(61,122,82,0.2)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = GREEN_BG }}
+            >
+              ACCEPTER
+            </button>
+            <button onClick={() => handleAct(onRefuse)} disabled={acting}
+              style={{ background: RED_BG, border:`1px solid ${RED}55`, color: RED, fontFamily:"'Raleway',sans-serif", fontSize: 8, letterSpacing: 2, padding:'6px 12px', cursor: acting ? 'not-allowed' : 'pointer', transition:'all 0.15s', opacity: acting ? 0.6 : 1 }}
+              onMouseEnter={e => { if (!acting) e.currentTarget.style.background = 'rgba(160,64,64,0.2)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = RED_BG }}
+            >
+              REFUSER
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function Panel() {
   const router = useRouter()
   const { user, token, ready, isLoggedIn, isClient, canPublish, logout } = useAuth()
-  const [stats,   setStats]   = useState(null)
-  const [biens,   setBiens]   = useState([])
-  const [negs,    setNegs]    = useState([])
-  const [loading, setLoading] = useState(true)
+  const [stats,    setStats]    = useState(null)
+  const [biens,    setBiens]    = useState([])
+  const [negs,     setNegs]     = useState([])
+  const [demandes, setDemandes] = useState([])
+  const [loading,  setLoading]  = useState(true)
 
   useEffect(() => {
     if (!ready) return
@@ -326,23 +422,48 @@ export default function Panel() {
   const fetchData = async () => {
     const headers = { Authorization: `Bearer ${token}` }
     try {
-      const [negsRes, biensRes] = await Promise.all([
+      const [negsRes, biensRes, demandesRes] = await Promise.all([
         fetch('/api/negociations', { headers }),
         canPublish ? fetch(`/api/biens?proprietaire_id=${user.id}`, { headers }) : Promise.resolve(null),
+        fetch('/api/demandes', { headers }),
       ])
-      const negsData  = await negsRes.json()
-      const biensData = biensRes ? await biensRes.json() : { biens: [] }
-      const negsList  = Array.isArray(negsData) ? negsData : (negsData.negociations || [])
-      const biensList = biensData.biens || []
+      const negsData     = await negsRes.json()
+      const biensData    = biensRes ? await biensRes.json() : { biens: [] }
+      const demandesData = await demandesRes.json()
+
+      const negsList     = Array.isArray(negsData) ? negsData : (negsData.negociations || [])
+      const biensList    = biensData.biens || []
+      const demandesList = Array.isArray(demandesData) ? demandesData : []
+
       setNegs(negsList)
       setBiens(biensList)
+      setDemandes(demandesList)
       setStats({
-        negs_en_cours:    negsList.filter(n => n.statut === 'EN_COURS').length,
-        biens_actifs:     biensList.filter(b => b.etat === 'DISPONIBLE').length,
-        messages_non_lus: negsList.flatMap(n => n.messages || []).filter(m => !m.lu && m.expediteur_id !== user.id).length,
+        negs_en_cours:       negsList.filter(n => n.statut === 'EN_COURS').length,
+        biens_actifs:        biensList.filter(b => b.etat === 'DISPONIBLE').length,
+        messages_non_lus:    negsList.flatMap(n => n.messages || []).filter(m => !m.lu && m.expediteur_id !== user.id).length,
+        demandes_en_attente: demandesList.filter(d => d.statut === 'EN_ATTENTE').length,
       })
     } catch(e) { console.error(e) }
     finally    { setLoading(false) }
+  }
+
+  const handleDemandeAction = async (demandeId, statut) => {
+    const res = await fetch(`/api/demandes/${demandeId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ statut }),
+    })
+    const data = await res.json()
+    if (res.ok) {
+      setDemandes(d => d.map(x => x.id === demandeId ? { ...x, statut } : x))
+      // refresh stats
+      setStats(s => ({ ...s, demandes_en_attente: Math.max(0, (s?.demandes_en_attente || 1) - 1) }))
+      // if accepted and a negotiation was created, navigate to it
+      if (statut === 'ACCEPTEE' && data.negociation_id) {
+        router.push(`/negociations/${data.negociation_id}`)
+      }
+    }
   }
 
   const handleLogout = () => { logout(); router.push('/') }
@@ -421,24 +542,26 @@ export default function Panel() {
 
               {/* Stats */}
               <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(175px, 1fr))', gap: 10, marginBottom: 52 }}>
-                <StatCard label="NÉGOCIATIONS ACTIVES" value={stats?.negs_en_cours ?? 0}    icon={ICONS.chat}   accentColor={GOLD}                            onClick={() => router.push('/negociations')} />
-                {canPublish && <StatCard label="BIENS DISPONIBLES"  value={stats?.biens_actifs ?? 0} icon={ICONS.home}   accentColor={GREEN}                         onClick={() => router.push('/biens/mes-biens')} />}
-                <StatCard label="MESSAGES NON LUS"     value={unreadCount}                  icon={ICONS.chat}   accentColor={unreadCount > 0 ? RED : GOLD_DIM}  onClick={() => router.push('/negociations')} />
-                {!canPublish && <StatCard label="BIENS SAUVEGARDÉS" value="—"               icon={ICONS.star}   accentColor={GOLD_DIM}                         onClick={() => router.push('/favoris')} />}
+                <StatCard label="NÉGOCIATIONS ACTIVES"   value={stats?.negs_en_cours ?? 0}          icon={ICONS.chat}  accentColor={GOLD}                                    onClick={() => router.push('/negociations')} />
+                {canPublish && <StatCard label="BIENS DISPONIBLES"    value={stats?.biens_actifs ?? 0}       icon={ICONS.home}  accentColor={GREEN}                                   onClick={() => router.push('/biens/mes-biens')} />}
+                {canPublish && <StatCard label="DEMANDES EN ATTENTE"  value={stats?.demandes_en_attente ?? 0} icon={ICONS.trend} accentColor={stats?.demandes_en_attente > 0 ? RED : GOLD_DIM} onClick={() => router.push('/demandes')} />}
+                <StatCard label="MESSAGES NON LUS"        value={unreadCount}                        icon={ICONS.chat}  accentColor={unreadCount > 0 ? RED : GOLD_DIM}        onClick={() => router.push('/negociations')} />
+                {!canPublish && <StatCard label="BIENS SAUVEGARDÉS"   value="—"                      icon={ICONS.star}  accentColor={GOLD_DIM}                               onClick={() => router.push('/favoris')} />}
               </div>
 
               {/* Quick actions */}
               <div style={{ marginBottom: 52 }}>
                 <SectionTitle>ACCÈS RAPIDE</SectionTitle>
                 <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(195px, 1fr))', gap: 6 }}>
-                  <ActionBtn icon="search" label="Parcourir les biens" href="/biens"            router={router} />
-                  <ActionBtn icon="chat"   label="Mes négociations"    href="/negociations"          router={router} />
+                  <ActionBtn icon="search" label="Parcourir les biens" href="/biens"                 router={router} />
+                  <ActionBtn icon="chat"   label="Mes négociations"    href="/negociations"           router={router} />
                   {canPublish && <>
-                    <ActionBtn icon="home" label="Gérer mes biens"     href="/biens/mes-biens"       router={router} />
-                    <ActionBtn icon="plus" label="Publier un bien"     href="/biens/nouveau"         router={router} highlight />
+                    <ActionBtn icon="home"  label="Gérer mes biens"    href="/biens/mes-biens"        router={router} />
+                    <ActionBtn icon="plus"  label="Publier un bien"    href="/biens/nouveau"          router={router} highlight />
+                    <ActionBtn icon="trend" label="Demandes clients"   href="/demandes"               router={router} highlight={stats?.demandes_en_attente > 0} />
                   </>}
-                  <ActionBtn icon="user"  label="Mon profil"           href={`/profil/${user?.id}`}  router={router} />
-                  {isClient && <ActionBtn icon="trend" label="Mes demandes" href="/demandes"         router={router} />}
+                  <ActionBtn icon="user"  label="Mon profil"           href={`/profil/${user?.id}`}   router={router} />
+                  {isClient && <ActionBtn icon="trend" label="Mes demandes" href="/demandes"          router={router} />}
                 </div>
               </div>
 
@@ -460,6 +583,54 @@ export default function Panel() {
                   )
                 }
               </div>
+
+              {/* ── Demandes section — visible to PROPRIETAIRE/AGENCE ── */}
+              {canPublish && (
+                <div style={{ marginBottom: 52 }}>
+                  <SectionTitle action="VOIR TOUT" onAction={() => router.push('/demandes')}>
+                    DEMANDES DE CLIENTS
+                    {stats?.demandes_en_attente > 0 && (
+                      <span style={{ marginLeft: 8, background: RED, color: '#fff', fontFamily:"'Raleway',sans-serif", fontSize: 8, padding: '2px 7px', letterSpacing: 2 }}>
+                        {stats.demandes_en_attente} NOUVELLE{stats.demandes_en_attente > 1 ? 'S' : ''}
+                      </span>
+                    )}
+                  </SectionTitle>
+                  {demandes.length === 0
+                    ? <EmptyState label="Aucune demande de client pour le moment." />
+                    : (
+                      <div style={{ display:'flex', flexDirection:'column', gap: 4 }}>
+                        {demandes.slice(0, 5).map(d => (
+                          <DemandeRow
+                            key={d.id}
+                            demande={d}
+                            isOwner={true}
+                            onAccept={() => handleDemandeAction(d.id, 'ACCEPTEE')}
+                            onRefuse={() => handleDemandeAction(d.id, 'REFUSEE')}
+                            onViewBien={() => router.push(`/biens/${d.bien_id}`)}
+                          />
+                        ))}
+                      </div>
+                    )
+                  }
+                </div>
+              )}
+
+              {/* ── Demandes section — visible to CLIENT (their own requests) ── */}
+              {isClient && demandes.length > 0 && (
+                <div style={{ marginBottom: 52 }}>
+                  <SectionTitle action="VOIR TOUT" onAction={() => router.push('/demandes')}>MES DEMANDES</SectionTitle>
+                  <div style={{ display:'flex', flexDirection:'column', gap: 4 }}>
+                    {demandes.slice(0, 3).map(d => (
+                      <DemandeRow
+                        key={d.id}
+                        demande={d}
+                        isOwner={false}
+                        onViewBien={() => router.push(`/biens/${d.bien_id}`)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Recent biens */}
               {canPublish && biens.length > 0 && (

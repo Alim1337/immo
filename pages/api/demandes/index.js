@@ -1,87 +1,120 @@
 // pages/api/demandes/index.js
-// GET  — list demandes (own for client, all for admin/proprio)
-// POST — create demande (client only)
 import { prisma } from '@/lib/prisma'
-import { requireAuth, requireRole } from '@/lib/auth'
+import jwt from 'jsonwebtoken'
 
-export default async function handler(req, res) {
-  if (req.method === 'GET')  return getDemandes(req, res)
-  if (req.method === 'POST') return createDemande(req, res)
-  return res.status(405).end()
+function requireAuth(req, res) {
+  try {
+    const h = req.headers.authorization
+    if (!h) { res.status(401).json({ error: 'Non authentifié.' }); return null }
+    return jwt.verify(h.replace('Bearer ', ''), process.env.JWT_SECRET)
+  } catch { res.status(401).json({ error: 'Token invalide.' }); return null }
 }
 
-async function getDemandes(req, res) {
+export default async function handler(req, res) {
   const user = requireAuth(req, res)
   if (!user) return
 
-  const { statut, page = 1, limite = 12 } = req.query
-  const skip = (Math.max(1, parseInt(page)) - 1) * parseInt(limite)
-  const take = Math.min(50, parseInt(limite))
-
-  // Clients only see their own; admins see all
-  const where = {}
-  if (user.role === 'CLIENT') where.client_id = user.id
-  if (statut) where.statut = statut
-
+  // ── GET ──────────────────────────────────────────────────────────────────────
+ if (req.method === 'GET') {
   try {
-    const [demandes, total] = await Promise.all([
-      prisma.demande.findMany({
-        where,
-        orderBy: { date_creation: 'desc' },
-        skip, take,
-        include: {
-          client: { select: { id: true, nom: true, prenom: true, avatar_url: true } },
+    const { statut } = req.query  // ← read once here
+    let demandes
+
+    if (user.role === 'CLIENT') {
+      demandes = await prisma.demande.findMany({
+        where: {
+          client_id: user.id,
+          ...(statut ? { statut } : {}),  // ← apply filter
         },
-      }),
-      prisma.demande.count({ where }),
-    ])
-    return res.status(200).json({
-      demandes,
-      pagination: { total, page: parseInt(page), total_pages: Math.ceil(total / take) },
-    })
-  } catch (err) {
-    console.error('[GET /api/demandes]', err)
+        include: {
+          interets: {
+            include: {
+              proprietaire: {
+                select: { id: true, nom: true, prenom: true, raison_sociale: true, avatar_url: true, role: true },
+              },
+            },
+          },
+        },
+        orderBy: { date_creation: 'desc' },
+      })
+
+    } else if (user.role === 'PROPRIETAIRE' || user.role === 'AGENCE') {
+      demandes = await prisma.demande.findMany({
+        where: {
+          // if no filter selected, default to EN_ATTENTE for marketplace
+          statut: statut ?? 'EN_ATTENTE',  // ← apply filter, not hardcoded
+        },
+        include: {
+          client: {
+            select: { id: true, nom: true, prenom: true, avatar_url: true, email: true, telephone: true },
+          },
+          interets: {
+            where: { proprietaire_id: user.id },
+          },
+        },
+        orderBy: { date_creation: 'desc' },
+      })
+
+    } else {
+      return res.status(403).json({ error: 'Accès non autorisé.' })
+    }
+
+    return res.status(200).json(demandes)
+  } catch (e) {
+    console.error('[GET /api/demandes]', e)
     return res.status(500).json({ error: 'Erreur serveur.' })
   }
 }
 
-async function createDemande(req, res) {
-  const user = requireRole(req, res, ['CLIENT'])
-  if (!user) return
+  // ── POST ─────────────────────────────────────────────────────────────────────
+  if (req.method === 'POST') {
+    if (user.role !== 'CLIENT') {
+      return res.status(403).json({ error: 'Seuls les clients peuvent créer une demande.' })
+    }
 
-  const {
-    type_bien, type_transaction,
-    wilaya, ville,
-    prix_min, prix_max,
-    superficie_min, nbr_chambres_min,
-    description,
-  } = req.body
+    const {
+      type_bien,
+      type_transaction,
+      wilaya,
+      ville,
+      prix_min,
+      prix_max,
+      superficie_min,
+      nbr_chambres_min,
+      description,
+    } = req.body
 
-  if (!type_bien)        return res.status(400).json({ error: 'Type de bien requis.' })
-  if (!type_transaction) return res.status(400).json({ error: 'Type de transaction requis.' })
-  if (!wilaya)           return res.status(400).json({ error: 'Wilaya requise.' })
+    if (!type_bien)        return res.status(400).json({ error: 'type_bien requis.' })
+    if (!type_transaction) return res.status(400).json({ error: 'type_transaction requis.' })
+    if (!wilaya)           return res.status(400).json({ error: 'wilaya requis.' })
 
-  try {
-    const demande = await prisma.demande.create({
-      data: {
-        client_id:        user.id,
-        type_bien,
-        type_transaction,
-        wilaya,
-        ville:            ville           || null,
-        prix_min:         prix_min        ? parseFloat(prix_min)    : null,
-        prix_max:         prix_max        ? parseFloat(prix_max)    : null,
-        superficie_min:   superficie_min  ? parseFloat(superficie_min) : null,
-        nbr_chambres_min: nbr_chambres_min ? parseInt(nbr_chambres_min) : null,
-        description:      description     || null,
-      },
-      include: {
-        client: { select: { id: true, nom: true, prenom: true } },
-      },
-    })
-    return res.status(201).json(demande)
-  } catch (err) {
-    console.error('[POST /api/demandes]', err)
-    return res.status(500).json({ error: 'Erreur serveur.' })
+    try {
+      const demande = await prisma.demande.create({
+        data: {
+          client_id:        user.id,
+          type_bien,
+          type_transaction,
+          wilaya,
+          ville:            ville?.trim()        || null,
+          prix_min:         prix_min             ? parseFloat(prix_min)         : null,
+          prix_max:         prix_max             ? parseFloat(prix_max)         : null,
+          superficie_min:   superficie_min       ? parseFloat(superficie_min)   : null,
+          nbr_chambres_min: nbr_chambres_min     ? parseInt(nbr_chambres_min)   : null,
+          description:      description?.trim()  || null,
+        },
+        include: {
+          client: {
+            select: { id: true, nom: true, prenom: true },
+          },
+        },
+      })
+
+      return res.status(201).json(demande)
+    } catch (e) {
+      console.error('[POST /api/demandes]', e)
+      return res.status(500).json({ error: 'Erreur serveur.' })
+    }
   }
+
+  return res.status(405).end()
 }

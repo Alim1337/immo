@@ -1,7 +1,4 @@
 // pages/demandes/index.js
-// CLIENT  → sees only their own demandes
-// PROPRIO / AGENCE → sees all demandes (marketplace)
-
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
@@ -16,7 +13,7 @@ const BG     = '#EDE9E1'
 const BG2    = '#E4DFD5'
 const BORDER = 'rgba(184,137,42,0.22)'
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 const TYPE_BIEN_LABELS = {
   APPARTEMENT:      'Appartement',
@@ -61,16 +58,18 @@ const STATUT_MAP = {
   'Annulée':    'ANNULEE',
 }
 
-// ── Card component ────────────────────────────────────────────────────────────
+// ── Card ──────────────────────────────────────────────────────────────────────
 
 function DemandeCard({ demande, isOwn, onDelete, onContact }) {
   const [confirmDelete, setConfirmDelete] = useState(false)
-  const [hovered, setHovered] = useState(false)
+  const [hovered,       setHovered]       = useState(false)
 
-  const statut = STATUT_STYLES[demande.statut] || { color: FAINT, label: demande.statut }
+  const statut     = STATUT_STYLES[demande.statut] || { color: FAINT, label: demande.statut }
   const clientName = demande.client
     ? `${demande.client.prenom || ''} ${demande.client.nom || ''}`.trim()
     : 'Client'
+
+  const interetCount = demande.interets?.length ?? 0
 
   return (
     <div
@@ -84,7 +83,7 @@ function DemandeCard({ demande, isOwn, onDelete, onContact }) {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      {/* Gold top accent */}
+      {/* Gold accent */}
       <div style={{ height: 2, background: `linear-gradient(to right, ${GOLD}, transparent)` }} />
 
       <div style={{ padding: '20px 24px 24px' }}>
@@ -117,7 +116,6 @@ function DemandeCard({ demande, isOwn, onDelete, onContact }) {
             color: statut.color,
             border: `1px solid ${statut.color}`,
             padding: '4px 10px',
-            opacity: 0.9,
             whiteSpace: 'nowrap',
           }}>
             {statut.label.toUpperCase()}
@@ -127,12 +125,12 @@ function DemandeCard({ demande, isOwn, onDelete, onContact }) {
         {/* Details grid */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 32px', marginBottom: 18 }}>
           {[
-            { label: 'Wilaya',     value: demande.wilaya },
-            { label: 'Ville',      value: demande.ville },
-            { label: 'Prix min',   value: fmtPrice(demande.prix_min) },
-            { label: 'Prix max',   value: fmtPrice(demande.prix_max) },
-            { label: 'Surface min',value: demande.superficie_min ? `${demande.superficie_min} m²` : null },
-            { label: 'Chambres',   value: demande.nbr_chambres_min ? `${demande.nbr_chambres_min}+` : null },
+            { label: 'Wilaya',      value: demande.wilaya },
+            { label: 'Ville',       value: demande.ville },
+            { label: 'Prix min',    value: fmtPrice(demande.prix_min) },
+            { label: 'Prix max',    value: fmtPrice(demande.prix_max) },
+            { label: 'Surface min', value: demande.superficie_min   ? `${demande.superficie_min} m²` : null },
+            { label: 'Chambres',    value: demande.nbr_chambres_min ? `${demande.nbr_chambres_min}+` : null },
           ].map(({ label, value }) => value ? (
             <div key={label} style={{ padding: '7px 0', borderBottom: `1px solid rgba(184,137,42,0.1)` }}>
               <span style={{ fontFamily: "'Raleway', sans-serif", fontSize: 9, letterSpacing: 2, color: FAINT, textTransform: 'uppercase', display: 'block' }}>
@@ -149,20 +147,26 @@ function DemandeCard({ demande, isOwn, onDelete, onContact }) {
         {demande.description && (
           <div style={{
             fontFamily: "'Raleway', sans-serif", fontSize: 11, color: MUTED,
-            fontStyle: 'italic', lineHeight: 1.7,
-            marginBottom: 18,
-            borderLeft: `2px solid ${BORDER}`,
-            paddingLeft: 12,
+            fontStyle: 'italic', lineHeight: 1.7, marginBottom: 18,
+            borderLeft: `2px solid ${BORDER}`, paddingLeft: 12,
           }}>
             {demande.description}
           </div>
         )}
 
-        {/* Footer: date + actions */}
+        {/* Footer */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontFamily: "'Raleway', sans-serif", fontSize: 9, letterSpacing: 1, color: FAINT }}>
-            {fmtDate(demande.date_creation)}
-          </span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <span style={{ fontFamily: "'Raleway', sans-serif", fontSize: 9, letterSpacing: 1, color: FAINT }}>
+              {fmtDate(demande.date_creation)}
+            </span>
+            {/* Show interet count to CLIENT */}
+            {isOwn && interetCount > 0 && (
+              <span style={{ fontFamily: "'Raleway', sans-serif", fontSize: 9, letterSpacing: 1, color: GOLD }}>
+                {interetCount} propriétaire{interetCount > 1 ? 's' : ''} intéressé{interetCount > 1 ? 's' : ''}
+              </span>
+            )}
+          </div>
 
           <div style={{ display: 'flex', gap: 8 }}>
             {/* Proprio / Agence → contact button */}
@@ -170,8 +174,7 @@ function DemandeCard({ demande, isOwn, onDelete, onContact }) {
               <button
                 onClick={() => onContact(demande)}
                 style={{
-                  background: GOLD, border: 'none',
-                  color: BG,
+                  background: GOLD, border: 'none', color: BG,
                   fontFamily: "'Raleway', sans-serif", fontSize: 8, letterSpacing: 2,
                   padding: '9px 18px', cursor: 'pointer',
                   transition: 'opacity 0.2s',
@@ -183,7 +186,7 @@ function DemandeCard({ demande, isOwn, onDelete, onContact }) {
               </button>
             )}
 
-            {/* Client → delete own demande */}
+            {/* Client → cancel own demande */}
             {isOwn && !confirmDelete && demande.statut === 'EN_ATTENTE' && (
               <button
                 onClick={() => setConfirmDelete(true)}
@@ -223,7 +226,7 @@ function DemandeCard({ demande, isOwn, onDelete, onContact }) {
                     padding: '9px 16px', cursor: 'pointer',
                   }}
                 >
-                  ANNULER
+                  RETOUR
                 </button>
               </>
             )}
@@ -234,7 +237,7 @@ function DemandeCard({ demande, isOwn, onDelete, onContact }) {
   )
 }
 
-// ── Page ─────────────────────────────────────────────────────────────────────
+// ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function DemandesIndex() {
   const router = useRouter()
@@ -242,8 +245,7 @@ export default function DemandesIndex() {
 
   const isClient  = user?.role === 'CLIENT'
   const isProprio = user?.role === 'PROPRIETAIRE' || user?.role === 'AGENCE'
-
-  const FILTERS = isClient ? FILTERS_CLIENT : FILTERS_PROPRIO
+  const FILTERS   = isClient ? FILTERS_CLIENT : FILTERS_PROPRIO
 
   const [demandes, setDemandes] = useState([])
   const [loading,  setLoading]  = useState(true)
@@ -251,49 +253,62 @@ export default function DemandesIndex() {
   const [error,    setError]    = useState(null)
 
   // ── Fetch ──
-  useEffect(() => {
-    if (!ready) return
-    if (!isLoggedIn) { router.push('/login'); return }
+ // ── Fetch ──
+useEffect(() => {
+  if (!ready) return
+  if (!isLoggedIn) { router.push('/login'); return }
 
-    const statut = STATUT_MAP[filter]
-    const qs = statut ? `?statut=${statut}` : ''
+  setLoading(true)
+  setError(null)
 
-    fetch(`/api/demandes${qs}`, {
-      headers: { Authorization: `Bearer ${token}` },
+  const statut = STATUT_MAP[filter]
+  const qs     = statut ? `?statut=${statut}` : ''
+
+  fetch(`/api/demandes${qs}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+    .then(r => {
+      if (!r.ok) throw new Error(r.status)
+      return r.json()
     })
-      .then(r => r.json())
-      .then(data => {
-        setDemandes(Array.isArray(data.demandes) ? data.demandes : [])
-        setLoading(false)
-      })
-      .catch(() => { setError('Erreur lors du chargement.'); setLoading(false) })
-  }, [ready, isLoggedIn, filter])
+    .then(data => {
+      setDemandes(Array.isArray(data) ? data : [])
+      setLoading(false)
+    })
+    .catch(() => {
+      setError('Erreur lors du chargement des demandes.')
+      setLoading(false)
+    })
+}, [ready, isLoggedIn, token, filter])  // ← make sure filter is here
 
-  // ── Delete (client annule sa demande) ──
+  // ── Cancel demande (client) ──
   const handleDelete = async (id) => {
     try {
-      await fetch(`/api/demandes/${id}`, {
+      const res = await fetch(`/api/demandes/${id}`, {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ statut: 'ANNULEE' }),
       })
+      if (!res.ok) throw new Error()
       setDemandes(prev => prev.map(d => d.id === id ? { ...d, statut: 'ANNULEE' } : d))
     } catch {
       alert('Erreur lors de l\'annulation.')
     }
   }
 
-  // ── Contact (proprio marque intérêt) ──
+  // ── Contact (proprio) ──
   const handleContact = (demande) => {
-    // Navigate to client profile or open a modal — adapt to your flow
     router.push(`/profil/${demande.client_id}`)
   }
 
-  // ── Loading skeleton ──
+  // ── Skeleton ──
   if (!ready || loading) return (
     <div style={{ background: BG, minHeight: '100vh' }}>
       <Header />
-      <div style={{ maxWidth: 1000, margin: '80px auto', padding: '0 40px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 3 }}>
+      <div style={{
+        maxWidth: 1000, margin: '60px auto', padding: '0 40px',
+        display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 3,
+      }}>
         {[1,2,3,4,5,6].map(i => (
           <div key={i} style={{ height: 220, background: BG2, animation: 'pulse 1.5s ease-in-out infinite' }} />
         ))}
@@ -345,13 +360,11 @@ export default function DemandesIndex() {
                 <div style={{ width: 36, height: 1, background: GOLD, marginTop: 12 }} />
               </div>
 
-              {/* Client → new demande CTA */}
               {isClient && (
                 <button
                   onClick={() => router.push('/demandes/nouveau')}
                   style={{
-                    background: GOLD, border: 'none',
-                    color: BG,
+                    background: GOLD, border: 'none', color: BG,
                     fontFamily: "'Raleway', sans-serif", fontSize: 10, letterSpacing: 3,
                     padding: '12px 24px', cursor: 'pointer',
                     transition: 'opacity 0.2s',
@@ -390,7 +403,11 @@ export default function DemandesIndex() {
         <main style={{ maxWidth: 1000, margin: '0 auto', padding: '40px 40px 80px', flex: 1, width: '100%', boxSizing: 'border-box' }}>
 
           {error && (
-            <div style={{ fontFamily: "'Raleway', sans-serif", fontSize: 11, color: '#dc2626', marginBottom: 24 }}>
+            <div style={{
+              background: 'rgba(220,38,38,0.08)', border: '1px solid rgba(220,38,38,0.25)',
+              color: '#dc2626', fontFamily: "'Raleway', sans-serif", fontSize: 11,
+              padding: '12px 16px', marginBottom: 28,
+            }}>
               {error}
             </div>
           )}

@@ -528,7 +528,7 @@ export default function ProfilPage() {
                     </button>
                   )}
                   {!isOwn && isLoggedIn && (
-                    <button onClick={() => router.push('/negociations')} style={{
+                    <button onClick={() => router.push(`/negociations/nouvelle?proprietaire_id=${profile.id}`)} style={{
                       background: GOLD, border:'none', color:'#FAF7F2',
                       fontFamily:"'Raleway',sans-serif", fontSize: 9, letterSpacing: 3, fontWeight: 500,
                       padding:'11px 22px', cursor:'pointer', transition:'background 0.2s',

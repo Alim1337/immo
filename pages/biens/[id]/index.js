@@ -78,7 +78,7 @@ export default function BienDetail() {
       const res  = await fetch('/api/negociations', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body:    JSON.stringify({ bien_id: parseInt(id), ...negForm }),
+        body:    JSON.stringify({ bien_id: parseInt(id), proprietaire_id: bien.proprietaire_id,  ...negForm }),
       })
       const data = await res.json()
       if (!res.ok) { setNegError(data.error || 'Erreur.'); return }

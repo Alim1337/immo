@@ -92,7 +92,7 @@ export default function Header() {
     if (type        && type        !== 'Type de bien')        p.set('type_bien', type)
     if (transaction && transaction !== 'Transaction')         p.set('type_transaction', transaction)
     if (prixMax)     p.set('prix_max', prixMax)
-    router.push(`/biens?${p.toString()}`)
+     router.push(`/search?${p.toString()}`)
     setSearchOpen(false)
   }
 
